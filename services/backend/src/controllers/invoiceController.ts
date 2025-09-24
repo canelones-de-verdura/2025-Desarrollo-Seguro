@@ -62,9 +62,15 @@ const getInvoicePDF = async (req: Request, res: Response, next: NextFunction) =>
 const getInvoice = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const invoiceId = req.params.id;
-    const invoice = await InvoiceService.getInvoice(invoiceId);
-    res.status(200).json(invoice);
+    const userId = (req as any).user.id; 
 
+    const invoice = await InvoiceService.getInvoice(invoiceId);
+
+    if (invoice.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    res.status(200).json(invoice);
   } catch (err) {
     next(err);
   }
