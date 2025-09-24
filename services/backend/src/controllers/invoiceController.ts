@@ -49,15 +49,20 @@ const getInvoicePDF = async (req: Request, res: Response, next: NextFunction) =>
     if (!pdfName) {
       return res.status(400).json({ error: 'Missing parameter pdfName' });
     }
+
+    if (pdfName.includes('/') || pdfName.includes('\\') ||pdfName.includes('..'))       
+    {
+      throw new Error('Invalid pdfName');
+    }
     const pdf = await InvoiceService.getReceipt(invoiceId, pdfName);
     // return the pdf as a binary response
     res.setHeader('Content-Type', 'application/pdf');
     res.send(pdf);
-
   } catch (err) {
     next(err);
   }
 };
+
 
 const getInvoice = async (req: Request, res: Response, next: NextFunction) => {
   try {
