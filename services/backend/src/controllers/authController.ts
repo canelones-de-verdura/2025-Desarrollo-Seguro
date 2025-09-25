@@ -74,7 +74,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.id;
 
-  if (userId !== (req as any).user.id) {
+  if (Number(userId) !== Number((req as any).user.id)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
     
