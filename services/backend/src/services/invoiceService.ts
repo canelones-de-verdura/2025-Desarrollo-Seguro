@@ -5,6 +5,11 @@ import axios from 'axios';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
+const PaymentProviders = Object.freeze({
+    visa: "http://visa/payments",
+    mastercard: "http://mastercard/payments"
+});
+
 interface InvoiceRow {
   id: string;
   userId: string;
@@ -39,7 +44,13 @@ class InvoiceService {
     // use axios to call http://paymentBrand/payments as a POST request
     // with the body containing ccNumber, ccv, expirationDate
     // and handle the response accordingly
-    const paymentResponse = await axios.post(`http://${paymentBrand}/payments`, {
+
+    const provider = PaymentProviders[paymentBrand];
+
+    if (!provider)
+            throw new Error('Invalid payment provider');
+
+    const paymentResponse = await axios.post(provider, {
       ccNumber,
       ccv,
       expirationDate
