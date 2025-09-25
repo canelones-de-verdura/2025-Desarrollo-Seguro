@@ -9,6 +9,26 @@ import ejs from 'ejs';
 const RESET_TTL = 1000 * 60 * 60;         // 1h
 const INVITE_TTL = 1000 * 60 * 60 * 24 * 7; // 7d
 
+function hashPassword(password: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16).toString("hex");
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(salt + ":" + derivedKey.toString("hex"));
+    });
+  });
+}
+
+function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const [salt, key] = storedHash.split(":");
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(key === derivedKey.toString("hex"));
+    });
+  });
+}
+
 class AuthService {
 
   static async createUser(user: User) {
@@ -23,7 +43,7 @@ class AuthService {
     await db<UserRow>('users')
       .insert({
         username: user.username,
-        password: user.password,
+        password: await hashPassword(user.password),
         email: user.email,
         first_name: user.first_name,
         last_name:  user.last_name,
@@ -69,7 +89,7 @@ class AuthService {
       .where({ id: user.id })
       .update({
         username: user.username,
-        password: user.password,
+        password: await hashPassword(user.password),
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name
@@ -83,7 +103,7 @@ class AuthService {
       .andWhere('activated', true)
       .first();
     if (!user) throw new Error('Invalid username or not activated');
-    if (password != user.password) throw new Error('Invalid password');
+    if (!(await verifyPassword(password, user.password))) throw new Error('Invalid password');
     return user;
   }
 
@@ -132,7 +152,7 @@ class AuthService {
     await db('users')
       .where({ id: row.id })
       .update({
-        password: newPassword,
+        password: await hashPassword(newPassword),
         reset_password_token: null,
         reset_password_expires: null
       });
@@ -147,7 +167,7 @@ class AuthService {
 
     await db('users')
       .update({
-        password: newPassword,
+        password: await hashPassword(newPassword),
         invite_token: null,
         invite_token_expires: null,
         activated: true
