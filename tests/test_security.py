@@ -65,4 +65,23 @@ def test_login(setup_create_user):
     response = requests.post("http://localhost:5000/auth/login", json={"username": username, "password": password})
     auth_token = response.json()["token"]
     assert auth_token
+def test_sql_inyection(setup_create_user):
+    username = setup_create_user[0]
+    password = setup_create_user[1]
 
+    response = requests.post("http://localhost:5000/auth/login", json={"username": username, "password": password})
+    auth_token = response.json()['token']
+    
+    myId = response.json()['user']['id']
+
+    url = "http://localhost:5000/invoices"
+
+    headers = {"Authorization": f"Bearer {auth_token}"}
+
+    responseInvoice = requests.get(url, headers=headers)
+    print(responseInvoice.json())
+
+    for invoice in responseInvoice.json():
+        invoice_id = invoice['userId']
+    
+        assert invoice_id == myId, " RIP"
