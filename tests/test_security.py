@@ -74,7 +74,7 @@ def test_sql_inyection(setup_create_user):
     
     myId = response.json()['user']['id']
 
-    url = "http://localhost:5000/invoices"
+    url = "http://localhost:5000/invoices?status=paid'%20OR%20'a'='a&operator=!="
 
     headers = {"Authorization": f"Bearer {auth_token}"}
 
