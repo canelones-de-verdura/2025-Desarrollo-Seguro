@@ -65,6 +65,10 @@ def test_login(setup_create_user):
     response = requests.post("http://localhost:5000/auth/login", json={"username": username, "password": password})
     auth_token = response.json()["token"]
     assert auth_token
+
+# Utilizamos el set up proporcionado previamente para realizar el login. Una vez realizamos el mismo, intentamos hacer la SQL Injection
+# que documentamos en el practico 2. Lo que hacemos es guardar nuestro id de usuario que nos devuelve el login y comparamos si
+# alguno de los invoices tiene un id de usuario distinto al nuestro. En main falla, en practico-2 no.
 def test_sql_inyection(setup_create_user):
     username = setup_create_user[0]
     password = setup_create_user[1]
@@ -79,7 +83,6 @@ def test_sql_inyection(setup_create_user):
     headers = {"Authorization": f"Bearer {auth_token}"}
 
     responseInvoice = requests.get(url, headers=headers)
-    print(responseInvoice.json())
 
     for invoice in responseInvoice.json():
         invoice_id = invoice['userId']
